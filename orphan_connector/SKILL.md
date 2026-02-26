@@ -5,7 +5,7 @@ description: Find unlinked notes and suggest relevant semantic connections to ot
 
 # Orphan Note Connector Workflow
 
-When the user asks to connect an orphan note or find connections for a specific note, follow these steps:
+When the user uses the slash command `/orphans` or asks to connect an orphan note or find connections for a specific note, follow these steps:
 
 1. **Identify the Target**: Understand which note the user wants to process. If they want you to find an orphan note, search for notes with few/no connections (no `[[` or `]]`).
 2. **Read the Note**: Read the target note thoroughly to understand its context.
