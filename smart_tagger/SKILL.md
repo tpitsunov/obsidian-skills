@@ -5,7 +5,7 @@ description: Automatically analyze a note and add appropriate tags to its YAML f
 
 # Smart Tagger & Cataloger Workflow
 
-When the user asks to analyze and tag a note, follow these steps:
+When the user uses the slash command `/tag` or asks to analyze and tag a note, follow these steps:
 
 1. **Understand Note Context**: Read the target note and extract its core topics, entities, and context.
 2. **Identify Existing Vault Tags**: 
