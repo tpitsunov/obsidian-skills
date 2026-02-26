@@ -5,7 +5,7 @@ description: Clean up and format a messy Markdown note to a standard Obsidian st
 
 # Markdown Linter & Formatter Workflow
 
-When the user asks to clean up, format, or lint a note, follow these steps:
+When the user uses the slash command `/lint` or asks to clean up, format, or lint a note, follow these steps:
 
 1. **Read the Note**: Read the contents of the target note.
 2. **Analyze Formatting Issues**: Scan the text for common Markdown mistakes:
