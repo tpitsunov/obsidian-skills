@@ -5,7 +5,7 @@ description: Create a Map of Content (MOC) index note for a specific folder or t
 
 # Map of Content (MOC) Builder Workflow
 
-When the user asks to build a Map of Content (MOC) or an index for a specific folder or tag, follow these steps:
+When the user uses the slash command `/moc [folder/tag]` or asks to build a Map of Content (MOC) or an index for a specific folder or tag, follow these steps:
 
 1. **Identify the Scope**: Determine which folder or tag the user wants to map.
 2. **Gather Notes**: 
