@@ -5,7 +5,7 @@ description: Calculate deterministic quantitative statistics and metrics for the
 
 # Vault Statistics (Dry Numbers) Workflow
 
-When the user asks for vault statistics, objective numbers, or metrics (e.g., "Give me stats on my vault" or "How many words are in my Obsidian"), follow these steps:
+When the user uses the slash command `/stats` or asks for vault statistics, objective numbers, or metrics (e.g., "Give me stats on my vault"), follow these steps:
 
 1. **Locate the Script**: This skill relies on a deterministic Python script located at `scripts/vault_stats.py` within this skill's folder.
 2. **Determine Vault Path**: Identify the absolute path to the root directory of the user's Obsidian Vault.
