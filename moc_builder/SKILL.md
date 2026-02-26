@@ -8,11 +8,12 @@ description: Create a Map of Content (MOC) index note for a specific folder or t
 When the user uses the slash command `/moc [folder/tag]` or asks to build a Map of Content (MOC) or an index for a specific folder or tag, follow these steps:
 
 1. **Identify the Scope**: Determine which folder or tag the user wants to map.
-2. **Gather Notes**: 
-   - If a folder: Use file listing tools (`list_dir`, `find_by_name`) to get all `.md` files in that folder.
-   - If a tag: Use text search tools (`grep_search`) to find all files containing that tag.
-3. **Analyze Content**: Read the first 100-200 lines of each note to understand its main topic, entities, and purpose. If there are too many notes, ask the user if they want to process them in batches.
-4. **Group by Semantic Similarity**: Group the gathered notes into logical categories or sub-topics based on your understanding of their content.
+2. **Gather Condensed Data**: **Do not read the raw files yourself.** To save context tokens and ensure accuracy, run the Python script to extract metadata (tags, H1s, or first-paragraph excerpts) from the target directory:
+   ```bash
+   python /absolute/path/to/Obsidian-AI-Skills/moc_builder/scripts/gather_data.py "/absolute/path/to/vault" --folder "Folder/Path/If/Requested"
+   ```
+3. **Analyze Condensed Output**: Read the condensed summary list provided by the script. (If filtering by tag, just ignore files in the script output that don't possess the requested tag).
+4. **Group by Semantic Similarity**: Group the gathered notes into logical categories or sub-topics based on your understanding of their titles and excerpts.
 5. **Generate the MOC Content**:
    - Create a title `# MOC: [Folder/Tag Name]`.
    - Write a short introduction explaining what this topic covers.
