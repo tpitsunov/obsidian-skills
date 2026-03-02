@@ -11,6 +11,7 @@ A collection of AI Agent Skills (Workflows) designed to automate, clean up, and 
 - **[Vault Statistics](./obsidian_stats)** (`/stats`) – Procedurally calculates vault metrics using a Python script.
 - **[Table of Contents Generator](./toc_generator)** (`/toc`) – Analyzes multiple header levels in a long markdown file and generates a clickable Table of Contents.
 - **[Concept Extractor](./concept_extractor)** (`/extract`) – Reads a large note, extracts 3-5 key concepts, creates new atomic notes for each, and maps them back into the original text.
+- **Zettel Atomizer** (`/atomize`): Advanced, lossless procedural text splitter that extracts cohesive thoughts into standalone Zettels.
 - **[Fleeting Note Processor](./fleeting_processor)** (`/fleeting`) – Scans an Inbox folder, processes small/quick notes, suggests titles, adds tags, and suggests how to categorize them.
 - **[Broken Link Healer](./broken_link_healer)** (`/heal_links`) – Finds unresolved links, uses semantic context to guess the intended existing file, and corrects the link.
 - **[Glossary Builder](./glossary_builder)** (`/glossary`) – Analyzes notes to find recurring domain-specific terms and generates a Glossary file with context-inferred definitions.
