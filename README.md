@@ -28,6 +28,17 @@ A collection of AI Agent Skills (Workflows) designed to automate, clean up, and 
 2. The agent will read the `SKILL.md` file to learn how to execute your requests predictably.
 3. Prompt your agent (e.g., "Run the Smart Tagger on my latest note").
 
+## Security: Zero-LLM-Contact
+
+This repository follows a strict **Zero-LLM-Contact** security model for sensitive data (API keys, tokens). 
+
+- **No `.env` files**: We avoid global environment files that could be accidentally committed or read by the LLM.
+- **Local Secret Vault**: Secrets are stored in `~/.obsidian_agent_secrets.json` with restricted OS-level permissions (`600`).
+- **Transparent Auth**: Python wrappers handle authentication locally. The LLM agent never sees, handles, or requests your API keys in the chat.
+- **No Obsidian Sync Leakage**: Because secrets are stored in your home directory (outside the vault), they are never synced via Obsidian Sync or Git.
+
+To set up a skill that requires an API key, run its `run.sh auth` command in your terminal when prompted by the agent.
+
 ## Why AI instead of Static Scripts?
 
 While procedural plugins (like Dataview or Templater) are fantastic for fixed patterns, these Agent Skills leverage LLMs to handle **semantic chaos**:
