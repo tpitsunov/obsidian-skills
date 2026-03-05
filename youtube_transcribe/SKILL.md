@@ -12,18 +12,12 @@ When the user asks you to extract or transcribe a YouTube video (`/yt-transcript
 Run the lightweight python script to securely and privately fetch the video's subtitle track. This script extracts raw text without burning your context limits on timestamps or requiring third-party API keys.
 
 **CRITICAL: VIRTUAL ENVIRONMENT**
-This script requires the `youtube-transcript-api` package. It must be run from an isolated virtual environment to avoid polluting the user's global Python installation.
+This script requires the `youtube-transcript-api` package. To ensure the user's host machine is not polluted, it uses an isolated virtual environment.
 
-If the `.venv` directory doesn't exist in the `youtube_transcribe` folder, create it and install the requirements first:
-```bash
-cd /absolute/path/to/Obsidian-AI-Skills/youtube_transcribe
-python3 -m venv .venv
-.venv/bin/pip install -r requirements.txt
-```
+Run the script exclusively through the provided `run.sh` bash wrapper. The wrapper will automatically build the environment if it doesn't exist and pass your arguments to the script transparently.
 
-Once the environment is ready, run the script **using the isolated python binary**:
 ```bash
-/absolute/path/to/Obsidian-AI-Skills/youtube_transcribe/.venv/bin/python /absolute/path/to/Obsidian-AI-Skills/youtube_transcribe/scripts/yt_fetch.py "YOUTUBE_URL_OR_ID"
+/absolute/path/to/Obsidian-AI-Skills/youtube_transcribe/run.sh "YOUTUBE_URL_OR_ID"
 ```
 
 ### Step 2: Read and Clean

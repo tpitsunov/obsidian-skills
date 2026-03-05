@@ -17,22 +17,16 @@ This script relies on `yt-dlp` which requires **FFmpeg** to be installed on the 
 The python wrapper will download the audio (via `yt-dlp`), send it to the Whisper API, and print the raw transcribed text.
 
 **CRITICAL: VIRTUAL ENVIRONMENT**
-This script must be run from an isolated virtual environment to avoid polluting the user's global Python installation.
+To ensure the user's host machine is not polluted, this skill uses an isolated virtual environment.
 
-If the `.venv` directory doesn't exist in the folder, create it and install requirements:
-```bash
-cd /absolute/path/to/Obsidian-AI-Skills/instagram_transcribe
-python3 -m venv .venv
-.venv/bin/pip install -r requirements.txt
-```
+Run the script exclusively through the provided `run.sh` bash wrapper. The wrapper will automatically build the environment if it doesn't exist and pass your arguments to the script transparently.
 
-Run the script **using the isolated python binary**:
 ```bash
 # Setup authentication (if auth error occurs):
-/absolute/path/to/Obsidian-AI-Skills/instagram_transcribe/.venv/bin/python /absolute/path/to/Obsidian-AI-Skills/instagram_transcribe/scripts/ig_fetch.py auth
+/absolute/path/to/Obsidian-AI-Skills/instagram_transcribe/run.sh auth
 
 # Transcribe URL:
-/absolute/path/to/Obsidian-AI-Skills/instagram_transcribe/.venv/bin/python /absolute/path/to/Obsidian-AI-Skills/instagram_transcribe/scripts/ig_fetch.py fetch "URL_HERE"
+/absolute/path/to/Obsidian-AI-Skills/instagram_transcribe/run.sh fetch "URL_HERE"
 ```
 
 ### Step 2: Read and Format
