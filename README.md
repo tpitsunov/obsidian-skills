@@ -30,3 +30,19 @@ While procedural plugins (like Dataview or Templater) are fantastic for fixed pa
 - Finding connections when names are misspelled or conjugated.
 - Grouping a Map of Content by *meaning* rather than folders.
 - Deducing appropriate tags that aren't specifically mentioned in the text.
+
+## Frameworks & Architecture
+
+This repository also contains a `frameworks/` folder. While skills are actions, frameworks are **architectural guidelines** for your AI agent. 
+If you want your agent to strictly follow a methodology (like PARA or Zettelkasten) when organizing incoming data, add the relevant framework `.md` file to your AI context. 
+
+## The "AI Outbox" Philosophy
+
+A core best practice for AI-assisted note-taking is the **AI Outbox**. 
+Never let an agent write directly into your core, polished knowledge folders. Instead, configure your agents to save all their generated artifacts, refactored notes, and transcriptions into a dedicated `/AI_Outbox` folder in your vault.
+
+1. Agent creates note in `/AI_Outbox`
+2. You review the note for accuracy and hallucinations
+3. You manually move the note to its final destination in your vault
+
+This ensures your graph remains pristine and human-verified.

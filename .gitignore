@@ -1,2 +1,5 @@
-
 test_vault/
+
+# API Keys & Secrets
+.env
+.env.*

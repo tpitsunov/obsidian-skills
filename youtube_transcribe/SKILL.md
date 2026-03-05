@@ -1,201 +1,41 @@
 ---
-name: youtube-full
-description: Complete YouTube toolkit — transcripts, search, channels, playlists, and metadata all in one skill. Use when you need comprehensive YouTube access, want to search and then get transcripts, browse channel content, work with playlists, or need the full suite of YouTube data endpoints. The all-in-one YouTube skill for agents.
-homepage: https://transcriptapi.com
-user-invocable: true
+name: YouTube Transcriber (`/yt-transcript`)
+description: A zero-dependency skill to download pure subtitles from any YouTube video and format them into readable notes.
 ---
 
-# YouTube Full
+# YouTube Transcriber Workflow
 
-Complete YouTube toolkit via [TranscriptAPI.com](https://transcriptapi.com). Everything in one skill.
+When the user asks you to extract or transcribe a YouTube video (`/yt-transcript <url>`), follow these precise steps:
 
-## Setup
+### Step 1: Execute Python Fetcher
 
-If `$TRANSCRIPT_API_KEY` is not set, help the user create an account (100 free credits, no card):
+Run the lightweight python script to securely and privately fetch the video's subtitle track. This script extracts raw text without burning your context limits on timestamps or requiring third-party API keys.
 
-**Step 1 — Register:** Ask user for their email.
+**CRITICAL: VIRTUAL ENVIRONMENT**
+This script requires the `youtube-transcript-api` package. It must be run from an isolated virtual environment to avoid polluting the user's global Python installation.
 
+If the `.venv` directory doesn't exist in the `youtube_transcribe` folder, create it and install the requirements first:
 ```bash
-node ./scripts/tapi-auth.js register --email USER_EMAIL
+cd /absolute/path/to/Obsidian-AI-Skills/youtube_transcribe
+python3 -m venv .venv
+.venv/bin/pip install -r requirements.txt
 ```
 
-→ OTP sent to email. Ask user: _"Check your email for a 6-digit verification code."_
-
-**Step 2 — Verify:** Once user provides the OTP:
-
+Once the environment is ready, run the script **using the isolated python binary**:
 ```bash
-node ./scripts/tapi-auth.js verify --token TOKEN_FROM_STEP_1 --otp CODE
+/absolute/path/to/Obsidian-AI-Skills/youtube_transcribe/.venv/bin/python /absolute/path/to/Obsidian-AI-Skills/youtube_transcribe/scripts/yt_fetch.py "YOUTUBE_URL_OR_ID"
 ```
 
-> API key saved to your shell profile and agent config. Ready to use.
+### Step 2: Read and Clean
 
-Manual option: [transcriptapi.com/signup](https://transcriptapi.com/signup) → Dashboard → API Keys.
+The script will output the raw, unformatted transcript block into your context. 
 
-## API Reference
+Your job as an AI is to act as an expert editor:
+1. Fix any obvious speech-to-text recognition errors.
+2. Add proper punctuation (commas, periods, question marks).
+3. Break the massive wall of text into logical, readable paragraphs.
+4. Add markdown H2 (`##`) headers denoting topic changes.
 
-Full OpenAPI spec: [transcriptapi.com/openapi.json](https://transcriptapi.com/openapi.json) — consult this for the latest parameters and schemas.
+### Step 3: Present
 
-## Transcript — 1 credit
-
-```bash
-curl -s "https://transcriptapi.com/api/v2/youtube/transcript\
-?video_url=VIDEO_URL&format=text&include_timestamp=true&send_metadata=true" \
-  -H "Authorization: Bearer $TRANSCRIPT_API_KEY"
-```
-
-| Param               | Required | Default | Values                          |
-| ------------------- | -------- | ------- | ------------------------------- |
-| `video_url`         | yes      | —       | YouTube URL or 11-char video ID |
-| `format`            | no       | `json`  | `json`, `text`                  |
-| `include_timestamp` | no       | `true`  | `true`, `false`                 |
-| `send_metadata`     | no       | `false` | `true`, `false`                 |
-
-**Response** (`format=json`):
-
-```json
-{
-  "video_id": "dQw4w9WgXcQ",
-  "language": "en",
-  "transcript": [{ "text": "...", "start": 18.0, "duration": 3.5 }],
-  "metadata": { "title": "...", "author_name": "...", "author_url": "..." }
-}
-```
-
-## Search — 1 credit
-
-```bash
-# Videos
-curl -s "https://transcriptapi.com/api/v2/youtube/search?q=QUERY&type=video&limit=20" \
-  -H "Authorization: Bearer $TRANSCRIPT_API_KEY"
-
-# Channels
-curl -s "https://transcriptapi.com/api/v2/youtube/search?q=QUERY&type=channel&limit=10" \
-  -H "Authorization: Bearer $TRANSCRIPT_API_KEY"
-```
-
-| Param   | Required | Default | Validation         |
-| ------- | -------- | ------- | ------------------ |
-| `q`     | yes      | —       | 1-200 chars        |
-| `type`  | no       | `video` | `video`, `channel` |
-| `limit` | no       | `20`    | 1-50               |
-
-## Channels
-
-All channel endpoints accept `channel` — an `@handle`, channel URL, or `UC...` channel ID. No need to resolve first.
-
-### Resolve handle — FREE
-
-```bash
-curl -s "https://transcriptapi.com/api/v2/youtube/channel/resolve?input=@TED" \
-  -H "Authorization: Bearer $TRANSCRIPT_API_KEY"
-```
-
-Response: `{"channel_id": "UC...", "resolved_from": "@TED"}`
-
-### Latest 15 videos — FREE
-
-```bash
-curl -s "https://transcriptapi.com/api/v2/youtube/channel/latest?channel=@TED" \
-  -H "Authorization: Bearer $TRANSCRIPT_API_KEY"
-```
-
-Returns exact `viewCount` and ISO `published` timestamps.
-
-### All channel videos — 1 credit/page
-
-```bash
-# First page (100 videos)
-curl -s "https://transcriptapi.com/api/v2/youtube/channel/videos?channel=@NASA" \
-  -H "Authorization: Bearer $TRANSCRIPT_API_KEY"
-
-# Next pages
-curl -s "https://transcriptapi.com/api/v2/youtube/channel/videos?continuation=TOKEN" \
-  -H "Authorization: Bearer $TRANSCRIPT_API_KEY"
-```
-
-Provide exactly one of `channel` or `continuation`. Response includes `continuation_token` and `has_more`.
-
-### Search within channel — 1 credit
-
-```bash
-curl -s "https://transcriptapi.com/api/v2/youtube/channel/search\
-?channel=@TED&q=QUERY&limit=30" \
-  -H "Authorization: Bearer $TRANSCRIPT_API_KEY"
-```
-
-## Playlists — 1 credit/page
-
-Accepts `playlist` — a YouTube playlist URL or playlist ID.
-
-```bash
-# First page
-curl -s "https://transcriptapi.com/api/v2/youtube/playlist/videos?playlist=PL_ID" \
-  -H "Authorization: Bearer $TRANSCRIPT_API_KEY"
-
-# Next pages
-curl -s "https://transcriptapi.com/api/v2/youtube/playlist/videos?continuation=TOKEN" \
-  -H "Authorization: Bearer $TRANSCRIPT_API_KEY"
-```
-
-Valid ID prefixes: `PL`, `UU`, `LL`, `FL`, `OL`. Response includes `playlist_info`, `results`, `continuation_token`, `has_more`.
-
-## Credit Costs
-
-| Endpoint        | Cost     |
-| --------------- | -------- |
-| transcript      | 1        |
-| search          | 1        |
-| channel/resolve | **free** |
-| channel/latest  | **free** |
-| channel/videos  | 1/page   |
-| channel/search  | 1        |
-| playlist/videos | 1/page   |
-
-## Validation Rules
-
-| Field      | Rule                                                    |
-| ---------- | ------------------------------------------------------- |
-| `channel`  | `@handle`, channel URL, or `UC...` ID                   |
-| `playlist` | Playlist URL or ID (`PL`/`UU`/`LL`/`FL`/`OL` prefix)   |
-| `q`        | 1-200 chars                                             |
-| `limit`    | 1-50                                                    |
-
-## Errors
-
-| Code | Meaning          | Action                                |
-| ---- | ---------------- | ------------------------------------- |
-| 401  | Bad API key      | Check key                             |
-| 402  | No credits       | transcriptapi.com/billing             |
-| 404  | Not found        | Resource doesn't exist or no captions |
-| 408  | Timeout          | Retry once after 2s                   |
-| 422  | Validation error | Check param format                    |
-| 429  | Rate limited     | Wait, respect Retry-After             |
-
-## Typical Workflows
-
-**Research workflow:** search → pick videos → fetch transcripts
-
-```bash
-# 1. Search
-curl -s "https://transcriptapi.com/api/v2/youtube/search\
-?q=machine+learning+explained&limit=5" \
-  -H "Authorization: Bearer $TRANSCRIPT_API_KEY"
-# 2. Transcript
-curl -s "https://transcriptapi.com/api/v2/youtube/transcript\
-?video_url=VIDEO_ID&format=text&include_timestamp=true&send_metadata=true" \
-  -H "Authorization: Bearer $TRANSCRIPT_API_KEY"
-```
-
-**Channel monitoring:** latest (free) → transcript
-
-```bash
-# 1. Latest uploads (free — pass @handle directly)
-curl -s "https://transcriptapi.com/api/v2/youtube/channel/latest?channel=@TED" \
-  -H "Authorization: Bearer $TRANSCRIPT_API_KEY"
-# 2. Transcript of latest
-curl -s "https://transcriptapi.com/api/v2/youtube/transcript\
-?video_url=VIDEO_ID&format=text&include_timestamp=true&send_metadata=true" \
-  -H "Authorization: Bearer $TRANSCRIPT_API_KEY"
-```
-
-Free tier: 100 credits, 300 req/min. Starter ($5/mo): 1,000 credits.
+Output the cleaned, readable markdown document to the user. Do not try to summarize the document unless the user explicitly requested it; your goal is to provide a cleaned, full transcription.

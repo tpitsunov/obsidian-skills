@@ -1,108 +1,45 @@
 ---
-name: instagram-transcribe
-description: Transcribe audio from an Instagram video (reel, post, story). Downloads video, extracts audio, uploads to Yandex Object Storage, and transcribes via Yandex SpeechKit async API.
-argument-hint: <instagram-url>
+name: Instagram Transcriber (`/ig-transcribe`)
+description: Download and transcribe Instagram Reels, TikToks, or similar short media directly to a clean note using Whisper API.
 ---
 
-Transcribe audio from Instagram URL: $ARGUMENTS
+# Instagram Transcriber Workflow
 
-Credentials are read from environment variables set in `~/.bashrc`:
-- `YANDEX_API_KEY` — API-ключ сервисного аккаунта (для SpeechKit)
-- `YANDEX_KEY_ID` — статический ключ доступа (для Object Storage)
-- `YANDEX_SECRET` — секретный ключ (для Object Storage)
-- `YANDEX_BUCKET` — имя бакета
+When the user gives you a video link (e.g. `/ig-transcribe <url>`), follow these steps using the fully local, isolated python script.
 
-Setup instructions: see `SETUP.md` in this skill's directory.
+### Zero-LLM-Contact Security Model
+**CRITICAL:** Never ask the user to paste their OpenAI API key in the chat. The Python script handles authentication transparently.
 
-Follow these steps exactly:
+### System Requirements
+This script relies on `yt-dlp` which requires **FFmpeg** to be installed on the user's host machine.
 
-## Step 1 — Download audio
+### Step 1: Execute Python Command
+The python wrapper will download the audio (via `yt-dlp`), send it to the Whisper API, and print the raw transcribed text.
 
+**CRITICAL: VIRTUAL ENVIRONMENT**
+This script must be run from an isolated virtual environment to avoid polluting the user's global Python installation.
+
+If the `.venv` directory doesn't exist in the folder, create it and install requirements:
 ```bash
-TMPDIR=$(mktemp -d)
-yt-dlp --no-playlist -x --audio-format mp3 --audio-quality 0 \
-  -o "$TMPDIR/audio.%(ext)s" "$URL"
-AUDIO="$TMPDIR/audio.mp3"
+cd /absolute/path/to/Obsidian-AI-Skills/instagram_transcribe
+python3 -m venv .venv
+.venv/bin/pip install -r requirements.txt
 ```
 
-If yt-dlp fails with an auth error, Instagram may require login cookies. Inform the user.
-
-## Step 2 — Upload to Yandex Object Storage
-
+Run the script **using the isolated python binary**:
 ```bash
-FILENAME="transcribe-$(date +%s).mp3"
-AWS_ACCESS_KEY_ID="$YANDEX_KEY_ID" \
-AWS_SECRET_ACCESS_KEY="$YANDEX_SECRET" \
-aws s3 cp "$AUDIO" "s3://$YANDEX_BUCKET/$FILENAME" \
-  --endpoint-url=https://storage.yandexcloud.net
+# Setup authentication (if auth error occurs):
+/absolute/path/to/Obsidian-AI-Skills/instagram_transcribe/.venv/bin/python /absolute/path/to/Obsidian-AI-Skills/instagram_transcribe/scripts/ig_fetch.py auth
+
+# Transcribe URL:
+/absolute/path/to/Obsidian-AI-Skills/instagram_transcribe/.venv/bin/python /absolute/path/to/Obsidian-AI-Skills/instagram_transcribe/scripts/ig_fetch.py fetch "URL_HERE"
 ```
 
-## Step 3 — Send async transcription request
+### Step 2: Read and Format
+The underlying Whisper model might lack punctuation or have spelling errors. 
 
-```bash
-RESPONSE=$(curl -s -4 -X POST \
-  -H "Authorization: Api-Key $YANDEX_API_KEY" \
-  -H "Content-Type: application/json" \
-  -d "{
-    \"config\": {
-      \"specification\": {
-        \"languageCode\": \"ru-RU\",
-        \"model\": \"general\",
-        \"audioEncoding\": \"MP3\",
-        \"literature_text\": true
-      }
-    },
-    \"audio\": {
-      \"uri\": \"https://storage.yandexcloud.net/$YANDEX_BUCKET/$FILENAME\"
-    }
-  }" \
-  https://transcribe.api.cloud.yandex.net/speech/stt/v2/longRunningRecognize)
-
-OPERATION_ID=$(echo $RESPONSE | python3 -c "import sys,json; print(json.load(sys.stdin)['id'])")
-echo "Operation ID: $OPERATION_ID"
-```
-
-## Step 4 — Poll for result
-
-Check every 5 seconds until `done: true`:
-
-```bash
-while true; do
-  RESULT=$(curl -s -4 \
-    -H "Authorization: Api-Key $YANDEX_API_KEY" \
-    "https://operation.api.cloud.yandex.net/operations/$OPERATION_ID")
-  DONE=$(echo $RESULT | python3 -c "import sys,json; print(json.load(sys.stdin).get('done', False))")
-  if [ "$DONE" = "True" ]; then
-    break
-  fi
-  echo "Ждём..."
-  sleep 5
-done
-```
-
-## Step 5 — Extract and print transcription
-
-```bash
-echo $RESULT | python3 -c "
-import sys, json
-data = json.load(sys.stdin)
-chunks = data['response']['chunks']
-text = ' '.join(alt['text'] for chunk in chunks for alt in chunk['alternatives'][:1])
-print(text)
-"
-```
-
-## Step 6 — Cleanup
-
-```bash
-rm -rf "$TMPDIR"
-```
-
-Note: файл в Object Storage удалится автоматически через 1 день по lifecycle policy.
-
-**ВАЖНО:** При создании нового бакета для этого скилла — сразу устанавливать lifecycle policy: префикс `transcribe-`, срок истечения **1 день**. Без этого файлы будут накапливаться.
-
-## Notes
-- languageCode: `ru-RU` по умолчанию. Если видео на другом языке — укажи пользователю, что можно поменять на `en-US` и т.д.
-- Если yt-dlp не может скачать (приватный аккаунт) — сообщи пользователю
-- Бакет используется как временное хранилище, файл удаляется через 1 день автоматически
+Your job as an AI is to act as an expert editor on the returned raw text:
+1. Fix any obvious speech-to-text recognition errors.
+2. Add proper punctuation.
+3. Add markdown formatting (Headers, bold text).
+4. Do NOT hallucinate content not in the transcript, just clean it up.
