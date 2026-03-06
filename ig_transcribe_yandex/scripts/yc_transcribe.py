@@ -5,35 +5,36 @@ Yandex Cloud Instagram Transcriber
 All-in-one script: downloads audio via yt-dlp, uploads to Yandex Object Storage,
 transcribes via Yandex SpeechKit async API, polls for result, and prints text.
 
-Credentials are stored securely in ~/.obsidian_agent_secrets.json (Zero-LLM-Contact).
+Credentials are stored in the OS Keychain (Zero-LLM-Contact).
 
 Required system tools: ffmpeg
-Required pip packages: yt-dlp, boto3
+Required pip packages: yt-dlp, boto3, keyring
 """
 import os
 import sys
 import json
-import stat
 import time
 import argparse
 import getpass
 import tempfile
-from pathlib import Path
 
 # --- Lazy imports (checked at runtime) ---
 def check_deps():
     try:
         import yt_dlp
         import boto3
+        import keyring
         return True
     except ImportError:
-        print("❌ Missing dependencies. Run: pip install yt-dlp boto3")
+        print("❌ Missing dependencies. Run: pip install yt-dlp boto3 keyring")
         sys.exit(1)
 
 # ============================================================
-# SECURITY MODULE — ~/.obsidian_agent_secrets.json
+# SECURITY MODULE (OS Keychain)
 # ============================================================
-SECRET_FILE = Path.home() / '.obsidian_agent_secrets.json'
+import keyring
+
+SERVICE_NAME = "obsidian-skills"
 
 REQUIRED_KEYS = {
     'YANDEX_API_KEY':  'API-ключ сервисного аккаунта (для SpeechKit)',
@@ -42,48 +43,30 @@ REQUIRED_KEYS = {
     'YANDEX_BUCKET':   'Имя бакета в Object Storage',
 }
 
-def _load_secrets() -> dict:
-    if SECRET_FILE.exists():
-        try:
-            return json.loads(SECRET_FILE.read_text('utf-8'))
-        except json.JSONDecodeError:
-            pass
-    return {}
-
-def _save_secrets(data: dict):
-    SECRET_FILE.touch()
-    os.chmod(SECRET_FILE, stat.S_IRUSR | stat.S_IWUSR)  # 600
-    SECRET_FILE.write_text(json.dumps(data, ensure_ascii=False, indent=2), 'utf-8')
-
 def get_yandex_creds() -> dict | None:
-    """Return dict with all 4 keys, or None if any is missing."""
-    data = _load_secrets()
-    creds = {k: data.get(k) for k in REQUIRED_KEYS}
+    """Return dict with all 4 keys from OS Keychain, or None if any is missing."""
+    creds = {k: keyring.get_password(SERVICE_NAME, k) for k in REQUIRED_KEYS}
     if all(creds.values()):
         return creds
     return None
 
 def auth_command():
-    """Interactive setup — prompts user for each Yandex Cloud credential."""
-    print("\n🔐 Yandex Cloud — Безопасная настройка")
+    """Interactive setup — stores each Yandex credential in OS Keychain."""
+    print("\n\U0001f510 Yandex Cloud — Secure Setup (OS Keychain)")
     print("=" * 60)
-    print("Все токены будут сохранены ЛОКАЛЬНО в вашей домашней директории.")
-    print(f"Файл:  {SECRET_FILE}")
-    print(f"Права: 600 (только вы)\n")
-
-    data = _load_secrets()
+    print("Токены будут сохранены в системное хранилище ОС (macOS Keychain / GNOME Keyring).")
+    print("Они НЕ хранятся в файлах и не видны AI агенту.\n")
 
     for key, description in REQUIRED_KEYS.items():
-        current = data.get(key)
+        current = keyring.get_password(SERVICE_NAME, key)
         hint = f" (текущий: ...{current[-6:]})" if current else ""
         value = getpass.getpass(f"  {description}{hint}\n  [{key}]: ").strip()
         if value:
-            data[key] = value
+            keyring.set_password(SERVICE_NAME, key, value)
         elif not current:
             print(f"  ⚠ Пропущено — {key} останется пустым.")
 
-    _save_secrets(data)
-    print(f"\n✅ Сохранено в {SECRET_FILE}")
+    print("\n✅ Сохранено в OS Keychain.")
 
 
 # ============================================================
