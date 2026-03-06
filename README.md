@@ -31,10 +31,10 @@ A collection of AI Agent Skills (Workflows) designed to automate, clean up, and 
 
 This repository follows a strict **Zero-LLM-Contact** security model for sensitive data (API keys, tokens). 
 
-- **No `.env` files**: We avoid global environment files that could be accidentally committed or read by the LLM.
-- **Local Secret Vault**: Secrets are stored in `~/.obsidian_agent_secrets.json` with restricted OS-level permissions (`600`).
-- **Transparent Auth**: Python wrappers handle authentication locally. The LLM agent never sees, handles, or requests your API keys in the chat.
-- **No Obsidian Sync Leakage**: Because secrets are stored in your home directory (outside the vault), they are never synced via Obsidian Sync or Git.
+- **OS Keychain**: Secrets are stored in the native OS keychain (macOS Keychain / GNOME Keyring / Windows Credential Locker) via the `keyring` Python library.
+- **No secret files**: No `.env`, no `.json`, no files with credentials anywhere in the project or home directory.
+- **LLM-proof**: The AI agent cannot read keychain entries via file operations. Credentials are loaded by the script at runtime and never appear in stdout.
+- **No Obsidian Sync Leakage**: Nothing to sync — secrets live in the OS, not in files.
 
 To set up a skill that requires an API key, run its `run.sh auth` command in your terminal when prompted by the agent.
 
