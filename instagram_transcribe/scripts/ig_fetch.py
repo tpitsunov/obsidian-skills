@@ -1,62 +1,37 @@
 import os
 import sys
-import json
-import stat
 import argparse
 import getpass
-from pathlib import Path
 
 try:
     import yt_dlp
     from openai import OpenAI
+    import keyring
 except ImportError:
     print("❌ Error: Missing dependencies.")
     print("Please run: pip install -r requirements.txt")
     sys.exit(1)
 
-# --- SECURITY MODULE ---
-SECRET_FILE_PATH = Path.home() / '.obsidian_agent_secrets.json'
-TOOL_NAME = "WHISPER_API_KEY"
+# --- SECURITY MODULE (OS Keychain) ---
+SERVICE_NAME = "obsidian-skills"
+KEY_NAME = "WHISPER_API_KEY"
 
 def get_token():
-    if SECRET_FILE_PATH.exists():
-        try:
-            with open(SECRET_FILE_PATH, 'r', encoding='utf-8') as f:
-                data = json.load(f)
-                return data.get(TOOL_NAME)
-        except json.JSONDecodeError:
-            pass
-    return None
+    return keyring.get_password(SERVICE_NAME, KEY_NAME)
 
 def auth_command():
-    print(f"\n🔐 Whisper API Security Setup")
+    print("\n🔐 Whisper API — Secure Setup (OS Keychain)")
     print("=" * 60)
-    print("For security reasons (Zero-LLM-Contact), you must never paste your OpenAI API tokens into the AI chat.")
-    print("This script will securely store your token in your OS home directory.")
-    print(f"Target file: {SECRET_FILE_PATH}\n")
+    print("Your token will be stored in the OS Keychain.")
+    print("It is NOT stored in any file and cannot be read by the AI agent.\n")
     
     token = getpass.getpass("Paste your OpenAI API Key (input will be hidden): ").strip()
     if not token:
         print("❌ Error: Token cannot be empty.")
         sys.exit(1)
-        
-    data = {}
-    if SECRET_FILE_PATH.exists():
-        try:
-            with open(SECRET_FILE_PATH, 'r', encoding='utf-8') as f:
-                data = json.load(f)
-        except json.JSONDecodeError:
-            pass
-            
-    data[TOOL_NAME] = token
     
-    SECRET_FILE_PATH.touch()
-    os.chmod(SECRET_FILE_PATH, stat.S_IRUSR | stat.S_IWUSR)
-    
-    with open(SECRET_FILE_PATH, 'w', encoding='utf-8') as f:
-        json.dump(data, f)
-        
-    print(f"\n✅ SUCCESS: '{TOOL_NAME}' securely saved.")
+    keyring.set_password(SERVICE_NAME, KEY_NAME, token)
+    print("\n✅ Key securely saved to OS Keychain.")
 
 # --- TRANSCRIBE CORE ---
 def transcribe_url(url: str):
