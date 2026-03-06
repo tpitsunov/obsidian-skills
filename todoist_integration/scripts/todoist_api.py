@@ -1,61 +1,32 @@
-import os
 import sys
 import json
-import stat
 import urllib.request
 import urllib.error
 import argparse
 import getpass
-from pathlib import Path
 
-# --- SECURITY MODULE ---
-# The secret file is stored in the OS user's home directory.
-# Not in the Obsidian folder, not in Git.
-SECRET_FILE_PATH = Path.home() / '.obsidian_agent_secrets.json'
-TOOL_NAME = "TODOIST_API_TOKEN"
+import keyring
+
+# --- SECURITY MODULE (OS Keychain) ---
+SERVICE_NAME = "obsidian-skills"
+KEY_NAME = "TODOIST_API_TOKEN"
 
 def get_token():
-    if SECRET_FILE_PATH.exists():
-        try:
-            with open(SECRET_FILE_PATH, 'r', encoding='utf-8') as f:
-                data = json.load(f)
-                return data.get(TOOL_NAME)
-        except json.JSONDecodeError:
-            pass
-    return None
+    return keyring.get_password(SERVICE_NAME, KEY_NAME)
 
 def auth_command():
-    print(f"\n🔐 Todoist Security Setup")
+    print("\n🔐 Todoist — Secure Setup (OS Keychain)")
     print("=" * 60)
-    print("For security reasons (Zero-LLM-Contact), you must never paste your API tokens into the AI chat.")
-    print("This script will securely store your token in your OS home directory, completely isolated from Obsidian and Git.")
-    print(f"Target file: {SECRET_FILE_PATH}")
-    print("Permissions: 600 (Only you can read/write it. System enforces this.)\n")
+    print("Your token will be stored in the OS Keychain (macOS Keychain / GNOME Keyring / Windows Credential Locker).")
+    print("It is NOT stored in any file and cannot be read by the AI agent.\n")
     
     token = getpass.getpass("Paste your Todoist API Token (input will be hidden): ").strip()
     if not token:
         print("❌ Error: Token cannot be empty.")
         sys.exit(1)
-        
-    data = {}
-    if SECRET_FILE_PATH.exists():
-        try:
-            with open(SECRET_FILE_PATH, 'r', encoding='utf-8') as f:
-                data = json.load(f)
-        except json.JSONDecodeError:
-            pass
-            
-    data[TOOL_NAME] = token
     
-    # Touch and set strict mode
-    SECRET_FILE_PATH.touch()
-    os.chmod(SECRET_FILE_PATH, stat.S_IRUSR | stat.S_IWUSR)
-    
-    with open(SECRET_FILE_PATH, 'w', encoding='utf-8') as f:
-        json.dump(data, f)
-        
-    print(f"\n✅ SUCCESS: '{TOOL_NAME}' securely saved.")
-    print("Your AI Agent can now use Todoist commands without ever seeing or transmitting your raw token.")
+    keyring.set_password(SERVICE_NAME, KEY_NAME, token)
+    print("\n✅ Token securely saved to OS Keychain.")
     print("=" * 60)
 
 # --- TODOIST API CORE ---
